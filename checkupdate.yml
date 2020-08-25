@@ -1,0 +1,40 @@
+---
+- hosts: server
+  become: yes
+  tasks:
+  - name: copy yum-check-update.sh to /tmp
+    copy:
+      src: ./files/yum-check-update.sh
+      dest: /tmp/yum-check-update.sh
+      owner: root
+      group: root
+      mode: '700'
+  - name: run yum-check-update.sh
+    command: /tmp/yum-check-update.sh
+  - name: email to sysadmin
+    mail:
+      host: mail.example.com
+      port: 587
+      secure: starttls
+      username: myuser@example.com
+      password: mypassword
+      from: myuser@example.com
+      to: myuser@example.com
+      subject: "[{{ ansible_fqdn | upper }}] Available Updates as of {{ ansible_date_time.date }}"
+      body: |
+        Hi Team,
+
+        See attached text file containing patches available for host {{ ansible_fqdn | upper }}
+
+
+        Thanks,
+        My User
+      attach:
+      - /tmp/yum-check-update.txt
+  - name: delete yum-check-update txt and sh files
+    file:
+      path: "{{ item }}"
+      state: absent
+    loop:
+    - /tmp/yum-check-update.sh
+    - /tmp/yum-check-update.txt
